@@ -3,7 +3,7 @@ import { ConsumerService } from './consumer.service';
 import { EmailService } from './email/email.service';
 
 @Injectable()
-export class EventService implements OnModuleInit {
+export class KafkaService implements OnModuleInit {
   constructor(
     private readonly consumerService: ConsumerService,
     private readonly emailService: EmailService,
