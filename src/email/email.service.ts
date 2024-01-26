@@ -19,7 +19,7 @@ export class EmailService {
       to: user.email,
       // from: '"Support Team" <support@example.com>', // override default from
       subject: 'Welcome to Nice App! Confirm your Email',
-      template: './templates/EmailVerificationTemplate', // `.ejs` extension is appended automatically
+      template: './EmailVerificationTemplate', // `.ejs` extension is appended automatically
       context: {
         // filling <%= %> brackets with content
         name: user.name,
