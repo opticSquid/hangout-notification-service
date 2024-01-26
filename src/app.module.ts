@@ -1,11 +1,16 @@
 import { Module } from '@nestjs/common';
 import { AppService } from './app.service';
-//import { KafkaModule } from './kafka/kafka.module';
+import { ConfigModule } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { AppController } from './app.controller';
 
 @Module({
   imports: [
+    // nest js config module configuration
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    // kafka producer configuration
     ClientsModule.register([
       {
         name: 'AUTH_SERVICE',
