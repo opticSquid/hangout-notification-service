@@ -1,27 +1,27 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
-import { SampleMessage } from './SampleMessage.event';
-import { NewUserRegistered } from './kafka/entities/NewUserRegistered';
+import { NewUserRegistered } from './entities/NewUserRegistered';
+import { SendRegistrationStatus } from './entities/SendRegistrationStatus';
+import { VerificationStatus } from './entities/VerificationStatus';
 
 @Injectable()
 export class AppService {
   constructor(
-    @Inject('AUTH_SERVICE') private readonly eventClient: ClientKafka,
+    @Inject('AUTH_SERVICE') private readonly authServiceEvent: ClientKafka,
   ) {}
   getHello(): string {
     return 'Hello World!';
   }
-  emit_sample_event({ msg, status }: SampleMessage) {
-    this.eventClient.emit(
-      'sample_topic',
-      JSON.stringify({ msg: msg, status: status }),
-    );
-  }
   sendEmailVerificationMail(newUser: NewUserRegistered) {
     console.log('service function log: ', newUser.email);
-    this.eventClient.emit('new-verified-user', {
+    const emailVerifiedUser: SendRegistrationStatus = {
       email: newUser.email,
       verificationStatus: true,
-    });
+    };
+    this.authServiceEvent.emit('new-verified-user', emailVerifiedUser);
+  }
+
+  sendAccountActivationMail(verificationStatus: VerificationStatus) {
+    console.log(verificationStatus);
   }
 }
