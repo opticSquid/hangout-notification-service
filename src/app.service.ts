@@ -19,5 +19,9 @@ export class AppService {
   }
   sendEmailVerificationMail(newUser: NewUserRegistered) {
     console.log('service function log: ', newUser.email);
+    this.eventClient.emit('new-verified-user', {
+      email: newUser.email,
+      verificationStatus: true,
+    });
   }
 }
