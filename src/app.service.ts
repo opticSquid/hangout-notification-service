@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { SampleMessage } from './SampleMessage.event';
+import { NewUserRegistered } from './kafka/entities/NewUserRegistered';
 
 @Injectable()
 export class AppService {
@@ -15,5 +16,8 @@ export class AppService {
       'sample_topic',
       JSON.stringify({ msg: msg, status: status }),
     );
+  }
+  sendEmailVerificationMail(newUser: NewUserRegistered) {
+    console.log('service function log: ', newUser.email);
   }
 }
