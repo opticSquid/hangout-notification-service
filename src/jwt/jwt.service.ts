@@ -17,6 +17,11 @@ export class JwtService {
       token,
       this.config.get('JWT_PRIVATE_KEY'),
     );
+    console.log('jwt result: ', payLoad);
     return payLoad == null ? false : true;
+  }
+  decryptJwt(token: string): JwtPayload | string {
+    const payLoad: JwtPayload | string = jwt.decode(token);
+    return payLoad ? payLoad : '';
   }
 }

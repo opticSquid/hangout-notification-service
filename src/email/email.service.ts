@@ -1,30 +1,18 @@
 // email.service.ts
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { NewUserRegistered } from 'src/entities/NewUserRegistered';
-
+import { SendEmailInterface } from 'src/entities/SendEmailInterface';
 @Injectable()
 export class EmailService {
-  constructor(
-    private mailerService: MailerService,
-    private readonly config: ConfigService,
-  ) {}
+  constructor(private mailerService: MailerService) {}
 
-  async sendMailForEmailVerification(user: NewUserRegistered, token: string) {
-    const confirmation_url: string =
-      this.config.get('MAIL_CONFIRMATION_URL') + token;
-
+  async sendMailForEmailVerification(emailDetails: SendEmailInterface) {
     await this.mailerService.sendMail({
-      to: user.email,
+      to: emailDetails.to,
       // from: '"Support Team" <support@example.com>', // override default from
-      subject: 'Welcome to Nice App! Confirm your Email',
-      template: './EmailVerificationTemplate', // `.ejs` extension is appended automatically
-      context: {
-        // filling <%= %> brackets with content
-        name: user.name,
-        confirmation_url,
-      },
+      subject: emailDetails.subject,
+      template: emailDetails.template, // `.ejs` extension is appended automatically
+      context: emailDetails.context,
     });
   }
 }
