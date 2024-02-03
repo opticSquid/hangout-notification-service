@@ -3,6 +3,7 @@ import { EventPattern } from '@nestjs/microservices';
 import { AppService } from './app.service';
 import { NewUserRegistered } from './entities/NewUserRegistered';
 import { VerificationStatus } from './entities/VerificationStatus';
+import { VerifyJWT } from './entities/VerifyJWT';
 
 @Controller()
 export class AppController {
@@ -14,5 +15,9 @@ export class AppController {
   @EventPattern('verification-status')
   handleAccountActivationHandler(verificationStatus: VerificationStatus) {
     this.appService.sendAccountActivationMail(verificationStatus);
+  }
+  @EventPattern('check-integrity-token')
+  handleCheckUserTokenVaidity(eventBody: VerifyJWT) {
+    this.appService.checkUserTokenValidity(eventBody.token);
   }
 }
