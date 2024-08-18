@@ -1,6 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AppModule } from './app.module';
+import { Partitioners } from 'kafkajs';
+import { Logger } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
@@ -13,10 +15,14 @@ async function bootstrap() {
         },
         // this is this service's group-id
         consumer: {
-          groupId: 'verification-service-group',
+          groupId: 'hangout-notification-service',
+        },
+        producer: {
           allowAutoTopicCreation: true,
+          createPartitioner: Partitioners.DefaultPartitioner,
         },
       },
+      logger: ['verbose'],
     },
   );
 

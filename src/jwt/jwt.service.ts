@@ -6,11 +6,25 @@ import { NewUserRegistered } from 'src/entities/NewUserRegistered';
 export class JwtService {
   constructor(private readonly config: ConfigService) {}
 
-  signJwt(user: NewUserRegistered): string {
-    return jwt.sign(user, this.config.get('JWT_PRIVATE_KEY'), {
-      expiresIn: '10m',
-      subject: user.email,
-    });
+  async signJwt(user: string): Promise<string> {
+    let token: string = '';
+    jwt.sign(
+      { message: user },
+      this.config.get('JWT_PRIVATE_KEY'),
+      {
+        algorithm: 'HS256',
+      },
+      (err: Error, encoded: string | undefined) => {
+        if (encoded != undefined) {
+          console.log('token: ', encoded);
+        } else {
+          console.error('error in signing jwt: ', err);
+        }
+        token = encoded;
+      },
+    );
+    console.log('token: ', token);
+    return token;
   }
   verifyJwt(token: string): boolean {
     const payLoad: JwtPayload | string = jwt.verify(

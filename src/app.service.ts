@@ -18,21 +18,29 @@ export class AppService {
   getHello(): string {
     return 'Hello World!';
   }
-  sendEmailVerificationMail(newUser: NewUserRegistered) {
-    console.log('email to be verified: ', newUser.email);
-    const jwtToken: string = this.jwtService.signJwt(newUser);
-    const confirmation_url: string =
-      this.config.get('MAIL_CONFIRMATION_URL') + jwtToken;
-    this.emailService.sendMailForEmailVerification({
-      to: newUser.email,
-      subject: 'Welcome to HangOut! Confirm your Email',
-      template: './EmailVerificationTemplate',
-      context: {
-        // filling <%= %> brackets with content
-        name: newUser.name,
-        confirmation_url: confirmation_url,
-      },
-    });
+  sendEmailVerificationMail(newUser: string) {
+    console.log('email to be verified: ', newUser);
+    const jwtToken: Promise<string> = this.jwtService.signJwt(newUser);
+    let confirmation_url: string = this.config.get('MAIL_CONFIRMATION_URL');
+    jwtToken
+      .then((token: string) => {
+        confirmation_url = confirmation_url + token;
+        console.log('JWT Token: ', token);
+      })
+      .catch((err) => {
+        confirmation_url = confirmation_url + 'error in token generation';
+      })
+      .finally(() => {
+        this.emailService.sendMailForEmailVerification({
+          to: newUser,
+          subject: 'Welcome to HangOut! Confirm your Email',
+          template: './EmailVerificationTemplate',
+          context: {
+            // filling <%= %> brackets with content
+            confirmation_url: confirmation_url,
+          },
+        });
+      });
   }
   checkJWT(jwt: string): boolean {
     return this.jwtService.verifyJwt(jwt);

@@ -8,8 +8,9 @@ import { VerifyJWT } from './entities/VerifyJWT';
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
-  @EventPattern('new-user-registered')
-  handleNewUserRegistered(data: NewUserRegistered) {
+  @EventPattern('verification-email')
+  handleNewUserRegistered(data: string) {
+    console.log('Incoming data: ', data);
     this.appService.sendEmailVerificationMail(data);
   }
   @EventPattern('verification-status')
