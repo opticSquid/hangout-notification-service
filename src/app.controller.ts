@@ -1,5 +1,11 @@
 import { Controller } from '@nestjs/common';
-import { EventPattern } from '@nestjs/microservices';
+import {
+  Ctx,
+  EventPattern,
+  KafkaContext,
+  MessagePattern,
+  Payload,
+} from '@nestjs/microservices';
 import { AppService } from './app.service';
 import { NewUserRegistered } from './entities/NewUserRegistered';
 import { VerificationStatus } from './entities/VerificationStatus';
@@ -8,10 +14,22 @@ import { VerifyJWT } from './entities/VerifyJWT';
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
-  @EventPattern('verification-email')
-  handleNewUserRegistered(data: string) {
-    console.log('Incoming data: ', data);
-    this.appService.sendEmailVerificationMail(data);
+  @MessagePattern('notification')
+  handleEmailNotification(
+    @Payload() data: string,
+    @Ctx() context: KafkaContext,
+  ) {
+    const key: string = context.getMessage().key.toString();
+    console.log(`Incoming event: ${key} -> ${context.getMessage().value}`);
+    switch (key) {
+      case 'email': {
+        this.appService.sendEmailVerificationMail(data);
+        break;
+      }
+      default: {
+        console.error('no handlers for this type of notification');
+      }
+    }
   }
   @EventPattern('verification-status')
   handleAccountActivationHandler(verificationStatus: VerificationStatus) {
