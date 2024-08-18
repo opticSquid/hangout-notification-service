@@ -18,7 +18,7 @@ export class AppService {
   getHello(): string {
     return 'Hello World!';
   }
-  sendEmailVerificationMail(newUser: string) {
+  sendEmailVerificationMail(newUser: string): void {
     console.log('email to be verified: ', newUser);
     const jwtToken: Promise<string> = this.jwtService.signJwt(newUser);
     let confirmation_url: string = this.config.get('MAIL_CONFIRMATION_URL');
@@ -28,7 +28,7 @@ export class AppService {
         console.log('JWT Token: ', token);
       })
       .catch((err) => {
-        confirmation_url = confirmation_url + 'error in token generation';
+        console.error('Could not generate JWT');
       })
       .finally(() => {
         this.emailService.sendMailForEmailVerification({
