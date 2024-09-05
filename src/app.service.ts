@@ -1,14 +1,14 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ClientKafka } from '@nestjs/microservices';
 import { JwtPayload } from 'jsonwebtoken';
 import { EmailService } from './email/email.service';
-import { NewUserRegistered } from './entities/NewUserRegistered';
 import { SendRegistrationStatus } from './entities/SendRegistrationStatus';
 import { VerificationStatus } from './entities/VerificationStatus';
 import { JwtService } from './jwt/jwt.service';
 @Injectable()
 export class AppService {
+  private readonly log: Logger  = new Logger(AppService.name);
   constructor(
     @Inject('AUTH_SERVICE') private readonly authServiceEvent: ClientKafka,
     private readonly emailService: EmailService,
@@ -19,16 +19,16 @@ export class AppService {
     return 'Hello World!';
   }
   sendEmailVerificationMail(newUser: string): void {
-    console.log('email to be verified: ', newUser);
+    this.log.verbose(`email to be verified: ${newUser}`);
     const jwtToken: Promise<string> = this.jwtService.signJwt(newUser);
     let confirmation_url: string = this.config.get('MAIL_CONFIRMATION_URL');
     jwtToken
       .then((token: string) => {
         confirmation_url = confirmation_url + token;
-        console.log('JWT Token: ', token);
+        this.log.verbose(`JWT Token: ${token}`);
       })
       .catch((err) => {
-        console.error('Could not generate JWT');
+        this.log.error('Could not generate JWT');
       })
       .finally(() => {
         this.emailService.sendMailForEmailVerification({

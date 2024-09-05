@@ -1,4 +1,4 @@
-import { Controller } from '@nestjs/common';
+import { Logger, Controller } from '@nestjs/common';
 import {
   Ctx,
   EventPattern,
@@ -7,12 +7,12 @@ import {
   Payload,
 } from '@nestjs/microservices';
 import { AppService } from './app.service';
-import { NewUserRegistered } from './entities/NewUserRegistered';
 import { VerificationStatus } from './entities/VerificationStatus';
 import { VerifyJWT } from './entities/VerifyJWT';
 
 @Controller()
 export class AppController {
+  private readonly log = new Logger(AppController.name);
   constructor(private readonly appService: AppService) {}
   @MessagePattern('notification')
   handleEmailNotification(
@@ -20,7 +20,8 @@ export class AppController {
     @Ctx() context: KafkaContext,
   ) {
     const key: string = context.getMessage().key.toString();
-    console.log(`Incoming event: ${key} -> ${context.getMessage().value}`);
+    // context.getMessage().value will give you the event body
+    this.log.verbose(`Incoming notification event type: ${key}`);
     switch (key) {
       case 'email': {
         this.appService.sendEmailVerificationMail(data);
