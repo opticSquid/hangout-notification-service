@@ -8,7 +8,7 @@ import { VerificationStatus } from './entities/VerificationStatus';
 import { JwtService } from './jwt/jwt.service';
 @Injectable()
 export class AppService {
-  private readonly log: Logger  = new Logger(AppService.name);
+  private readonly log: Logger = new Logger(AppService.name);
   constructor(
     @Inject('AUTH_SERVICE') private readonly authServiceEvent: ClientKafka,
     private readonly emailService: EmailService,
@@ -18,9 +18,9 @@ export class AppService {
   getHello(): string {
     return 'Hello World!';
   }
-  sendEmailVerificationMail(newUser: string): void {
-    this.log.verbose(`email to be verified: ${newUser}`);
-    const jwtToken: Promise<string> = this.jwtService.signJwt(newUser);
+  sendEmailVerificationMail(email: string): void {
+    this.log.verbose(`email to be verified: ${email}`);
+    const jwtToken: Promise<string> = this.jwtService.signJwt(email);
     let confirmation_url: string = this.config.get('MAIL_CONFIRMATION_URL');
     jwtToken
       .then((token: string) => {
@@ -32,7 +32,7 @@ export class AppService {
       })
       .finally(() => {
         this.emailService.sendMailForEmailVerification({
-          to: newUser,
+          to: email,
           subject: 'Welcome to HangOut! Confirm your Email',
           template: './EmailVerificationTemplate',
           context: {
@@ -45,8 +45,8 @@ export class AppService {
   checkJWT(jwt: string): boolean {
     return this.jwtService.verifyJwt(jwt);
   }
-  checkUserTokenValidity(token: string) {
-    console.log('jwt came for validation:', token);
+  checkUserTokenValidity(token: string): SendRegistrationStatus {
+    this.log.verbose(`incoming jwt for validation: ${token}`);
     if (this.checkJWT(token)) {
       const newUser: JwtPayload | string = this.jwtService.decryptJwt(token);
       if (newUser !== '') {
@@ -54,11 +54,13 @@ export class AppService {
           email: newUser.sub.toString(),
           verificationStatus: true,
         };
-        this.authServiceEvent.emit('new-verified-user', emailVerifiedUser);
+        return emailVerifiedUser;
+      } else {
+        return { email: undefined, verificationStatus: false };
       }
     }
   }
-  sendAccountActivationMail(verificationStatus: VerificationStatus) {
+  sendAccountActivationMail(verificationStatus: VerificationStatus): void {
     if (verificationStatus.status !== 500) {
       this.emailService.sendMailForEmailVerification({
         to: verificationStatus.email,

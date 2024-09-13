@@ -1,31 +1,27 @@
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AppModule } from './app.module';
-import { Partitioners } from 'kafkajs';
-import { Logger } from '@nestjs/common';
-
 async function bootstrap() {
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    AppModule,
-    {
-      transport: Transport.KAFKA,
-      options: {
-        client: {
-          brokers: ['localhost:9092'],
-        },
-        // this is this service's group-id
-        consumer: {
-          groupId: 'hangout-notification-service',
-        },
-        producer: {
-          allowAutoTopicCreation: true,
-          createPartitioner: Partitioners.DefaultPartitioner,
-        },
+  const app = await NestFactory.create(AppModule, { logger: ['verbose'] });
+  const kafkaMicroservice = app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.KAFKA,
+    options: {
+      client: {
+        brokers: ['localhost:9092'],
       },
-      logger: ['verbose'],
+      // this is this service's group-id
+      consumer: {
+        groupId: 'hangout-notification-service',
+      },
+      // producer: {
+      //   allowAutoTopicCreation: false,
+      //   createPartitioner: Partitioners.DefaultPartitioner,
+      // },
     },
-  );
-
-  await app.listen();
+  });
+  // start all microservices.. (here kafka)
+  await app.startAllMicroservices();
+  // start the app with http server
+  await app.listen(5012);
 }
 bootstrap();

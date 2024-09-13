@@ -1,4 +1,4 @@
-import { Logger, Controller } from '@nestjs/common';
+import { Body, Controller, Logger, Post } from '@nestjs/common';
 import {
   Ctx,
   EventPattern,
@@ -7,6 +7,7 @@ import {
   Payload,
 } from '@nestjs/microservices';
 import { AppService } from './app.service';
+import { SendRegistrationStatus } from './entities/SendRegistrationStatus';
 import { VerificationStatus } from './entities/VerificationStatus';
 import { VerifyJWT } from './entities/VerifyJWT';
 
@@ -14,30 +15,18 @@ import { VerifyJWT } from './entities/VerifyJWT';
 export class AppController {
   private readonly log = new Logger(AppController.name);
   constructor(private readonly appService: AppService) {}
-  @MessagePattern('notification')
-  handleEmailNotification(
-    @Payload() data: string,
-    @Ctx() context: KafkaContext,
-  ) {
-    const key: string = context.getMessage().key.toString();
-    // context.getMessage().value will give you the event body
-    this.log.verbose(`Incoming notification event type: ${key}`);
-    switch (key) {
-      case 'email': {
-        this.appService.sendEmailVerificationMail(data);
-        break;
-      }
-      default: {
-        console.error('no handlers for this type of notification');
-      }
-    }
+
+  @EventPattern('account-verification')
+  handleEmailNotification(@Payload() data: string) {
+    this.appService.sendEmailVerificationMail(data);
   }
-  @EventPattern('verification-status')
+
+  @Post('/verify-token')
+  handleCheckUserTokenVaidity(@Body() req: VerifyJWT): SendRegistrationStatus {
+    return this.appService.checkUserTokenValidity(req.token);
+  }
+  @EventPattern('account-activation')
   handleAccountActivationHandler(verificationStatus: VerificationStatus) {
     this.appService.sendAccountActivationMail(verificationStatus);
-  }
-  @EventPattern('check-integrity-token')
-  handleCheckUserTokenVaidity(eventBody: VerifyJWT) {
-    this.appService.checkUserTokenValidity(eventBody.token);
   }
 }
