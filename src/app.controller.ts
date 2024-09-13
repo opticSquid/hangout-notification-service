@@ -1,15 +1,9 @@
 import { Body, Controller, Logger, Post } from '@nestjs/common';
-import {
-  Ctx,
-  EventPattern,
-  KafkaContext,
-  MessagePattern,
-  Payload,
-} from '@nestjs/microservices';
+import { EventPattern, Payload } from '@nestjs/microservices';
 import { AppService } from './app.service';
-import { SendRegistrationStatus } from './entities/SendRegistrationStatus';
-import { VerificationStatus } from './entities/VerificationStatus';
-import { VerifyJWT } from './entities/VerifyJWT';
+import { AccountVerficationStatus } from './entities/AccountVerficationStatus';
+import { AccountActivationRequest } from './entities/AccountActivationRequest';
+import { TokenVerificationRequest } from './entities/TokenVerificationRequest';
 
 @Controller()
 export class AppController {
@@ -22,11 +16,14 @@ export class AppController {
   }
 
   @Post('/verify-token')
-  handleCheckUserTokenVaidity(@Body() req: VerifyJWT): SendRegistrationStatus {
+  handleCheckUserTokenVaidity(
+    @Body() req: TokenVerificationRequest,
+  ): AccountVerficationStatus {
     return this.appService.checkUserTokenValidity(req.token);
   }
+
   @EventPattern('account-activation')
-  handleAccountActivationHandler(verificationStatus: VerificationStatus) {
+  handleAccountActivationHandler(verificationStatus: AccountActivationRequest) {
     this.appService.sendAccountActivationMail(verificationStatus);
   }
 }

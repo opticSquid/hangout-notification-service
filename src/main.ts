@@ -3,7 +3,7 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { logger: ['verbose'] });
-  const kafkaMicroservice = app.connectMicroservice<MicroserviceOptions>({
+  app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.KAFKA,
     options: {
       client: {
@@ -21,6 +21,7 @@ async function bootstrap() {
   });
   // start all microservices.. (here kafka)
   await app.startAllMicroservices();
+  console.log('starting http server at port 5012');
   // start the app with http server
   await app.listen(5012);
 }

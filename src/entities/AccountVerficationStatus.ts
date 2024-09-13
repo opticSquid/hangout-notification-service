@@ -1,4 +1,4 @@
-export interface SendRegistrationStatus {
+export interface AccountVerficationStatus {
   email: string;
   verificationStatus: boolean;
 }

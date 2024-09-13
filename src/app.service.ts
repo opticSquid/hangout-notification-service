@@ -3,8 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { ClientKafka } from '@nestjs/microservices';
 import { JwtPayload } from 'jsonwebtoken';
 import { EmailService } from './email/email.service';
-import { SendRegistrationStatus } from './entities/SendRegistrationStatus';
-import { VerificationStatus } from './entities/VerificationStatus';
+import { AccountVerficationStatus } from './entities/AccountVerficationStatus';
+import { AccountActivationRequest } from './entities/AccountActivationRequest';
 import { JwtService } from './jwt/jwt.service';
 @Injectable()
 export class AppService {
@@ -45,12 +45,12 @@ export class AppService {
   checkJWT(jwt: string): boolean {
     return this.jwtService.verifyJwt(jwt);
   }
-  checkUserTokenValidity(token: string): SendRegistrationStatus {
+  checkUserTokenValidity(token: string): AccountVerficationStatus {
     this.log.verbose(`incoming jwt for validation: ${token}`);
     if (this.checkJWT(token)) {
       const newUser: JwtPayload | string = this.jwtService.decryptJwt(token);
       if (newUser !== '') {
-        const emailVerifiedUser: SendRegistrationStatus = {
+        const emailVerifiedUser: AccountVerficationStatus = {
           email: newUser.sub.toString(),
           verificationStatus: true,
         };
@@ -60,7 +60,9 @@ export class AppService {
       }
     }
   }
-  sendAccountActivationMail(verificationStatus: VerificationStatus): void {
+  sendAccountActivationMail(
+    verificationStatus: AccountActivationRequest,
+  ): void {
     if (verificationStatus.status !== 500) {
       this.emailService.sendMailForEmailVerification({
         to: verificationStatus.email,
