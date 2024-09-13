@@ -12,6 +12,7 @@ export class AppController {
 
   @EventPattern('account-verification')
   handleEmailNotification(@Payload() event: AccountActivationEvent) {
+    this.log.debug('Account verification event consumed');
     this.appService.sendEmailVerificationMail(event.email);
   }
 
@@ -19,6 +20,7 @@ export class AppController {
   handleCheckUserTokenVaidity(
     @Body() req: TokenVerificationRequest,
   ): AccountVerficationStatus {
+    this.log.debug('received request to verify token');
     return this.appService.checkUserTokenValidity(req.token);
   }
 
@@ -26,6 +28,7 @@ export class AppController {
   handleAccountActivationHandler(
     @Payload() verificationStatus: AccountActivationEvent,
   ) {
+    this.log.debug('Account activation event consumed');
     this.appService.sendAccountActivationMail(verificationStatus);
   }
 }

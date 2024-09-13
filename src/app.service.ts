@@ -15,9 +15,6 @@ export class AppService {
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
   ) {}
-  getHello(): string {
-    return 'Hello World!';
-  }
   sendEmailVerificationMail(email: string): void {
     this.log.verbose(`email to be verified: ${email}`);
     const jwtToken: Promise<string> = this.jwtService.signJwt(email);
@@ -42,16 +39,18 @@ export class AppService {
         });
       });
   }
-  checkJWT(jwt: string): boolean {
-    return this.jwtService.verifyJwt(jwt);
-  }
   checkUserTokenValidity(token: string): AccountVerficationStatus {
     this.log.verbose(`incoming jwt for validation: ${token}`);
-    if (this.checkJWT(token)) {
-      const newUser: JwtPayload | string = this.jwtService.decryptJwt(token);
-      if (newUser !== '') {
+    this.log.debug('checking if the token is valid');
+    if (this.jwtService.verifyJwt(token)) {
+      this.log.verbose('the provided token is valid');
+      const newUser: JwtPayload | undefined = this.jwtService.decryptJwt(token);
+      this.log.verbose(
+        `user we got from the token: ${JSON.stringify(newUser)}`,
+      );
+      if (newUser) {
         const emailVerifiedUser: AccountVerficationStatus = {
-          email: newUser.sub.toString(),
+          email: newUser.email,
           isVerified: true,
         };
         return emailVerifiedUser;
@@ -60,6 +59,7 @@ export class AppService {
       }
     }
   }
+
   sendAccountActivationMail(verificationStatus: AccountActivationEvent): void {
     if (verificationStatus.status !== 500) {
       this.emailService.sendMailForEmailVerification({

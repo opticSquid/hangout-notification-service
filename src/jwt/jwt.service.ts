@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Payload } from '@nestjs/microservices';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 @Injectable()
 export class JwtService {
+  private readonly log: Logger = new Logger(JwtService.name);
   constructor(private readonly config: ConfigService) {}
 
   async signJwt(user: string): Promise<string> {
@@ -16,11 +18,15 @@ export class JwtService {
       token,
       this.config.get('JWT_PRIVATE_KEY'),
     );
-    console.log('jwt result: ', payLoad);
+    this.log.verbose(`result of jwt verification: ${JSON.stringify(payLoad)}`);
     return payLoad == null ? false : true;
   }
-  decryptJwt(token: string): JwtPayload | string {
-    const payLoad: JwtPayload | string = jwt.decode(token);
-    return payLoad ? payLoad : '';
+  decryptJwt(token: string): JwtPayload | undefined {
+    const payLoad: JwtPayload | null | string = jwt.decode(token);
+    if (typeof payLoad === 'string' || typeof Payload === null) {
+      return undefined;
+    } else {
+      return payLoad;
+    }
   }
 }
