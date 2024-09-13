@@ -4,7 +4,7 @@ import { ClientKafka } from '@nestjs/microservices';
 import { JwtPayload } from 'jsonwebtoken';
 import { EmailService } from './email/email.service';
 import { AccountVerficationStatus } from './entities/AccountVerficationStatus';
-import { AccountActivationRequest } from './entities/AccountActivationRequest';
+import { AccountActivationEvent } from './entities/AccountActivationEvent';
 import { JwtService } from './jwt/jwt.service';
 @Injectable()
 export class AppService {
@@ -52,17 +52,15 @@ export class AppService {
       if (newUser !== '') {
         const emailVerifiedUser: AccountVerficationStatus = {
           email: newUser.sub.toString(),
-          verificationStatus: true,
+          isVerified: true,
         };
         return emailVerifiedUser;
       } else {
-        return { email: undefined, verificationStatus: false };
+        return { email: undefined, isVerified: false };
       }
     }
   }
-  sendAccountActivationMail(
-    verificationStatus: AccountActivationRequest,
-  ): void {
+  sendAccountActivationMail(verificationStatus: AccountActivationEvent): void {
     if (verificationStatus.status !== 500) {
       this.emailService.sendMailForEmailVerification({
         to: verificationStatus.email,

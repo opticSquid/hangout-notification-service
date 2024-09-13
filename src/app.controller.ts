@@ -2,7 +2,7 @@ import { Body, Controller, Logger, Post } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { AppService } from './app.service';
 import { AccountVerficationStatus } from './entities/AccountVerficationStatus';
-import { AccountActivationRequest } from './entities/AccountActivationRequest';
+import { AccountActivationEvent } from './entities/AccountActivationEvent';
 import { TokenVerificationRequest } from './entities/TokenVerificationRequest';
 
 @Controller()
@@ -11,8 +11,8 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @EventPattern('account-verification')
-  handleEmailNotification(@Payload() data: string) {
-    this.appService.sendEmailVerificationMail(data);
+  handleEmailNotification(@Payload() event: AccountActivationEvent) {
+    this.appService.sendEmailVerificationMail(event.email);
   }
 
   @Post('/verify-token')
@@ -23,7 +23,9 @@ export class AppController {
   }
 
   @EventPattern('account-activation')
-  handleAccountActivationHandler(verificationStatus: AccountActivationRequest) {
+  handleAccountActivationHandler(
+    @Payload() verificationStatus: AccountActivationEvent,
+  ) {
     this.appService.sendAccountActivationMail(verificationStatus);
   }
 }
