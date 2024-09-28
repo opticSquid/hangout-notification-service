@@ -1,15 +1,16 @@
-import { Injectable } from '@nestjs/common';
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { NewUserRegistered } from 'src/entities/NewUserRegistered';
+import { Payload } from '@nestjs/microservices';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 @Injectable()
 export class JwtService {
+  private readonly log: Logger = new Logger(JwtService.name);
   constructor(private readonly config: ConfigService) {}
 
-  signJwt(user: NewUserRegistered): string {
-    return jwt.sign(user, this.config.get('JWT_PRIVATE_KEY'), {
+  async signJwt(user: string): Promise<string> {
+    return jwt.sign({ email: user }, await this.config.get('JWT_PRIVATE_KEY'), {
+      algorithm: 'HS256',
       expiresIn: '10m',
-      subject: user.email,
     });
   }
   verifyJwt(token: string): boolean {
@@ -17,6 +18,15 @@ export class JwtService {
       token,
       this.config.get('JWT_PRIVATE_KEY'),
     );
+    this.log.verbose(`result of jwt verification: ${JSON.stringify(payLoad)}`);
     return payLoad == null ? false : true;
+  }
+  decryptJwt(token: string): JwtPayload | undefined {
+    const payLoad: JwtPayload | null | string = jwt.decode(token);
+    if (typeof payLoad === 'string' || typeof Payload === null) {
+      return undefined;
+    } else {
+      return payLoad;
+    }
   }
 }

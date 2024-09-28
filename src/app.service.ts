@@ -1,32 +1,76 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ClientKafka } from '@nestjs/microservices';
-import { NewUserRegistered } from './entities/NewUserRegistered';
-import { VerificationStatus } from './entities/VerificationStatus';
+import { JwtPayload } from 'jsonwebtoken';
 import { EmailService } from './email/email.service';
+import { AccountVerficationStatus } from './entities/AccountVerficationStatus';
+import { AccountActivationEvent } from './entities/AccountActivationEvent';
 import { JwtService } from './jwt/jwt.service';
-
 @Injectable()
 export class AppService {
+  private readonly log: Logger = new Logger(AppService.name);
   constructor(
     @Inject('AUTH_SERVICE') private readonly authServiceEvent: ClientKafka,
     private readonly emailService: EmailService,
     private readonly jwtService: JwtService,
+    private readonly config: ConfigService,
   ) {}
-  getHello(): string {
-    return 'Hello World!';
+  sendEmailVerificationMail(email: string): void {
+    this.log.verbose(`email to be verified: ${email}`);
+    const jwtToken: Promise<string> = this.jwtService.signJwt(email);
+    let confirmation_url: string = this.config.get('MAIL_CONFIRMATION_URL');
+    jwtToken
+      .then((token: string) => {
+        confirmation_url = confirmation_url + token;
+        this.log.verbose(`JWT Token: ${token}`);
+      })
+      .catch((err) => {
+        this.log.error('Could not generate JWT');
+      })
+      .finally(() => {
+        this.emailService.sendMailForEmailVerification({
+          to: email,
+          subject: 'Welcome to HangOut! Confirm your Email',
+          template: './EmailVerificationTemplate',
+          context: {
+            // filling <%= %> brackets with content
+            confirmation_url: confirmation_url,
+          },
+        });
+      });
   }
-  sendEmailVerificationMail(newUser: NewUserRegistered) {
-    console.log('service function log: ', newUser.email);
-    const jwtToken: string = this.jwtService.signJwt(newUser);
-    this.emailService.sendMailForEmailVerification(newUser, jwtToken);
-    // const emailVerifiedUser: SendRegistrationStatus = {
-    //   email: newUser.email,
-    //   verificationStatus: true,
-    // };
-    //this.authServiceEvent.emit('new-verified-user', emailVerifiedUser);
+  checkUserTokenValidity(token: string): AccountVerficationStatus {
+    this.log.verbose(`incoming jwt for validation: ${token}`);
+    this.log.debug('checking if the token is valid');
+    if (this.jwtService.verifyJwt(token)) {
+      this.log.verbose('the provided token is valid');
+      const newUser: JwtPayload | undefined = this.jwtService.decryptJwt(token);
+      this.log.verbose(
+        `user we got from the token: ${JSON.stringify(newUser)}`,
+      );
+      if (newUser) {
+        const emailVerifiedUser: AccountVerficationStatus = {
+          email: newUser.email,
+          isVerified: true,
+        };
+        return emailVerifiedUser;
+      } else {
+        return { email: undefined, isVerified: false };
+      }
+    }
   }
 
-  sendAccountActivationMail(verificationStatus: VerificationStatus) {
-    console.log(verificationStatus);
+  sendAccountActivationMail(verificationStatus: AccountActivationEvent): void {
+    if (verificationStatus.status !== 500) {
+      this.emailService.sendMailForEmailVerification({
+        to: verificationStatus.email,
+        subject: 'Account Activation Successful',
+        template: './AccountActivationSuccessful',
+        context: {
+          // filling <%= %> brackets with content
+          name: verificationStatus.name,
+        },
+      });
+    }
   }
 }
