@@ -26,6 +26,7 @@ export class AppService {
       })
       .catch((err) => {
         this.log.error('Could not generate JWT');
+        this.log.debug(`cause: ${err}`);
       })
       .finally(() => {
         this.emailService.sendMailForEmailVerification({
