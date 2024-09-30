@@ -3,41 +3,31 @@ import { ConfigService } from '@nestjs/config';
 import { ClientKafka } from '@nestjs/microservices';
 import { JwtPayload } from 'jsonwebtoken';
 import { EmailService } from './email/email.service';
-import { AccountVerficationStatus } from './entities/AccountVerficationStatus';
 import { AccountActivationEvent } from './entities/AccountActivationEvent';
+import { AccountVerficationStatus } from './entities/AccountVerficationStatus';
 import { JwtService } from './jwt/jwt.service';
 @Injectable()
 export class AppService {
   private readonly log: Logger = new Logger(AppService.name);
   constructor(
-    @Inject('AUTH_SERVICE') private readonly authServiceEvent: ClientKafka,
     private readonly emailService: EmailService,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
   ) {}
   sendEmailVerificationMail(email: string): void {
-    this.log.verbose(`email to be verified: ${email}`);
-    const jwtToken: Promise<string> = this.jwtService.signJwt(email);
+    const jwtToken: string = this.jwtService.signJwt(email);
     let confirmation_url: string = this.config.get('MAIL_CONFIRMATION_URL');
-    jwtToken
-      .then((token: string) => {
-        confirmation_url = confirmation_url + token;
-        this.log.verbose(`JWT Token: ${token}`);
-      })
-      .catch((err) => {
-        this.log.error('Could not generate JWT');
-      })
-      .finally(() => {
-        this.emailService.sendMailForEmailVerification({
-          to: email,
-          subject: 'Welcome to HangOut! Confirm your Email',
-          template: './EmailVerificationTemplate',
-          context: {
-            // filling <%= %> brackets with content
-            confirmation_url: confirmation_url,
-          },
-        });
-      });
+    confirmation_url = confirmation_url + jwtToken;
+    this.log.log('sending email');
+    this.emailService.sendMailForEmailVerification({
+      to: email,
+      subject: 'Welcome to HangOut! Confirm your Email',
+      template: './EmailVerificationTemplate',
+      context: {
+        // filling <%= %> brackets with content
+        confirmation_url: confirmation_url,
+      },
+    });
   }
   checkUserTokenValidity(token: string): AccountVerficationStatus {
     this.log.verbose(`incoming jwt for validation: ${token}`);
