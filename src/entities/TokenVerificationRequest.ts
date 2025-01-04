@@ -1,3 +1,3 @@
 export interface TokenVerificationRequest {
-  token: string;
+  accessToken: string;
 }

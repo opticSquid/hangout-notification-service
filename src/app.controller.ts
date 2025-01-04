@@ -24,7 +24,7 @@ export class AppController {
     @Body() req: TokenVerificationRequest,
   ): AccountVerficationStatus {
     this.log.debug('received request to verify token');
-    return this.appService.checkUserTokenValidity(req.token);
+    return this.appService.checkUserTokenValidity(req.accessToken);
   }
 
   @EventPattern('account-activation')
